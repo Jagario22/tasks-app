@@ -1,13 +1,19 @@
+import 'package:bloc_pattern/bloc_pattern.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:task_manager/app/api/model/category.dart';
+import 'package:task_manager/app/api/api_error.dart';
 import 'package:task_manager/app/api/model/priority.dart';
 import 'package:task_manager/app/api/model/task.dart';
+import 'package:task_manager/app/blocks/task_block.dart';
 import 'package:task_manager/app/resources/strings.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/datetime/datetime_picker_view.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/textfield/text_field_view.dart';
 import 'package:task_manager/app/ui/pages/categories_page.dart';
 import 'package:task_manager/app/ui/pages/priority_page.dart';
+import 'package:task_manager/app/ui/widgets/dialog/custom_bottom_dialog.dart';
+import 'package:task_manager/app/ui/widgets/dialog/error_dialog.dart';
+import 'package:time_machine/time_machine.dart';
 
 class EditTaskPage extends StatefulWidget {
   final Task task;
@@ -22,19 +28,30 @@ class EditTaskPage extends StatefulWidget {
 }
 
 class _EditTaskPageState extends State<EditTaskPage> {
-  final _textTaskController = TextEditingController();
+  final _taskTitleController = TextEditingController();
   final _textDescriptionController = TextEditingController();
   DateTime _selectedStartDate = DateTime.now();
   DateTime _selectedEndDate = DateTime.now();
-  Task _newTask = new Task(
-    title: "",
-    endTime: "",
-    startTime: "",
-    completed: false,
-    category: null,
-  );
+  Task _newTask;
+
   String categoryTitle = AppStrings.category;
   String priorityTitle = AppStrings.priority;
+
+  @override
+  void initState() {
+    if (widget.task == null) {
+      _newTask = new Task(
+        title: "",
+        endTime: "",
+        startTime: "",
+        completed: false,
+        category: null,
+      );
+    } else {
+      _newTask = widget.task;
+    }
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,20 +60,17 @@ class _EditTaskPageState extends State<EditTaskPage> {
         title: Text(AppStrings.editor),
         centerTitle: true,
       ),
-      body: _buildEditor(),
+      body: SingleChildScrollView(
+          scrollDirection: Axis.vertical, child: _buildEditor()),
       floatingActionButton: FloatingActionButton(
         onPressed: onSave,
-        child: Icon(Icons.check),
+        child: Icon(Icons.check, color: Theme.of(context).primaryColorDark),
+        backgroundColor: Colors.yellow,
       ),
     );
   }
 
   Widget _buildEditor() {
-    return SingleChildScrollView(
-        scrollDirection: Axis.vertical, child: _buildEditInfoColumn());
-  }
-
-  Widget _buildEditInfoColumn() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -105,7 +119,40 @@ class _EditTaskPageState extends State<EditTaskPage> {
     );
   }
 
-  void onSave() {}
+  Future<void> onSave() async {
+    try {
+      if (!_isValidData()) return;
+      _newTask.title = _taskTitleController.text;
+      _newTask.description = _textDescriptionController.text;
+      _newTask.startTime = formatDate(_selectedStartDate).toString();
+      _newTask.endTime = formatDate(_selectedEndDate).toString();
+      _newTask.completed = false;
+      print("processing POST request for task");
+      await BlocProvider.getBloc<TaskPageBlock>().apiClient.addTask(_newTask);
+      Navigator.pop(context);
+    } on ApiError catch (ex) {
+      showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(
+                    message: "Error. status code: " + ex.statusCode.toString())
+                .build(context);
+          });
+    }
+  }
+
+  bool _isValidData() {
+    if (_taskTitleController.text.isEmpty) {
+      showDialog(
+          context: context,
+          builder: (context) => CustomBottomDialog(
+                message: "Please, enter a title of the task",
+              ));
+      return false;
+    }
+    return true;
+  }
 
   Widget _buildAddTaskInfo() {
     return Container(
@@ -121,38 +168,28 @@ class _EditTaskPageState extends State<EditTaskPage> {
           _buildAdvanceTaskInfo(
               categoryTitle,
               Icon(Icons.category,
-                  size: 25, color: Theme.of(context).accentColor), _getAllCategories),
-           _buildAdvanceTaskInfo(
+                  size: 25, color: Theme.of(context).accentColor),
+              _getAllCategories),
+          _buildAdvanceTaskInfo(
               priorityTitle,
               Icon(Icons.label_important,
-                  size: 25, color: Theme.of(context).accentColor), _getAllPriority),
+                  size: 25, color: Theme.of(context).accentColor),
+              _getAllPriority),
         ],
       ),
     );
   }
 
   String getCategoryTitle() {
-    if (widget.task == null) {
-      if (_newTask.category != null) {
-        return _newTask.category.name;
-      }
-    } else {
-      if (widget.task.category != null) {
-        return widget.task.category.name;
-      }
+    if (_newTask.category != null) {
+      return _newTask.category.name;
     }
     return "";
   }
 
   String getPriorityTitle() {
-    if (widget.task == null) {
-      if (_newTask.priority != null) {
-        return EnumUtil.fromEnumToString(_newTask.priority);
-      }
-    } else {
-      if (widget.task.category != null) {
-        return EnumUtil.fromEnumToString(widget.task.priority);
-      }
+    if (_newTask.priority != null) {
+      return EnumUtil.fromEnumToString(_newTask.priority);
     }
     return "";
   }
@@ -166,17 +203,31 @@ class _EditTaskPageState extends State<EditTaskPage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12))),
               child: Container(
-                width: 100.0,
-                height: 250.0,
-                child: widget.task == null
-                    ? CategoriesPage(task: _newTask)
-                    : CategoriesPage(task: widget.task),
+                width: 400.0,
+                height: 450.0,
+                child: CategoriesPage(task: _newTask),
               ));
         });
     setState(() {
-      if (shouldUpdate == true || shouldUpdate == null)
-        categoryTitle = AppStrings.category + ": " + getCategoryTitle();
+      if ((shouldUpdate == true || shouldUpdate == null)) {
+        if (!isNewTaskCategoryNull())
+          categoryTitle = AppStrings.category + ": " + getCategoryTitle();
+        else
+          categoryTitle = AppStrings.category;
+      }
     });
+  }
+
+  bool isNewTaskCategoryNull() {
+    if (_newTask.category == null) return true;
+
+    return false;
+  }
+
+  bool _isNewTaskPriorityNull() {
+    if (_newTask.priority == null) return true;
+
+    return false;
   }
 
   void _getAllPriority() async {
@@ -188,16 +239,17 @@ class _EditTaskPageState extends State<EditTaskPage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(12))),
               child: Container(
-                width: 100.0,
-                height: 250.0,
-                child: widget.task == null
-                    ? PriorityPage(task: _newTask)
-                    : PriorityPage(task: widget.task),
-              ));
+                  width: 100.0,
+                  height: 300.0,
+                  child: PriorityPage(task: _newTask)));
         });
     setState(() {
-      if (shouldUpdate == true || shouldUpdate == null)
-        priorityTitle = AppStrings.priority + ": " + getPriorityTitle();
+      if ((shouldUpdate == true || shouldUpdate == null)) {
+        if (!_isNewTaskPriorityNull())
+          priorityTitle = AppStrings.priority + ": " + getPriorityTitle();
+        else
+          priorityTitle = AppStrings.priority;
+      }
     });
   }
 
@@ -239,7 +291,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
             _buildTextField(
                 'Enter task name',
                 Icon(Icons.title, color: Colors.teal.shade50),
-                _textTaskController),
+                _taskTitleController),
             SizedBox(height: 16),
             _buildTextField(
                 'Note',
@@ -288,5 +340,11 @@ class _EditTaskPageState extends State<EditTaskPage> {
       });
 
     return datetime;
+  }
+
+  OffsetDateTime formatDate(DateTime dateTime) {
+    return OffsetDateTime(
+        LocalDateTime.dateTime(dateTime, CalendarSystem.gregorian),
+        Offset.duration(dateTime.timeZoneOffset));
   }
 }

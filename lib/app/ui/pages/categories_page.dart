@@ -1,10 +1,12 @@
 import 'package:bloc_pattern/bloc_pattern.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:task_manager/app/api/model/category.dart';
 import 'package:task_manager/app/api/model/task.dart';
 import 'package:task_manager/app/blocks/edit_page_block.dart';
 import 'package:task_manager/app/blocks/state.dart';
 import 'package:task_manager/app/resources/strings.dart';
+import 'package:task_manager/app/ui/widgets/itemview/custom_list_tile.dart';
 import 'add_category_page.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/view/states_view.dart';
 import 'package:task_manager/app/ui/widgets/button/button_view.dart';
@@ -20,9 +22,14 @@ class CategoriesPage extends StatefulWidget {
 
 class _CategoriesPageState extends State<CategoriesPage> {
   final _bloc = BlocProvider.getBloc<EditPageBlock>();
+  bool _shouldChangeListView = false;
+  List<Category> _categories = new List();
+  List<Category> _newCategories = new List();
+  bool _selectedNone;
 
   @override
   void initState() {
+    _selectedNone = widget.task == null ? true : false;
     _bloc.getCategoriesAll();
     super.initState();
   }
@@ -35,38 +42,67 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            MaterialButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Icon(Icons.arrow_back_rounded)),
-            SizedBox(width: 11),
-            Text(AppStrings.categories,
-                style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        _buildCategoriesStream(),
-        CustomButton(
-          buttonText: "Add category",
-          onPressed: () {
-            showDialog(
-                barrierDismissible: false,
-                context: context,
-                builder: (BuildContext context) {
-                  return Dialog(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12))),
-                    child: SingleChildScrollView(child: AddCategoryPage()),
-                  );
+    return Container(
+      padding: EdgeInsets.all(10.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              MaterialButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Icon(Icons.arrow_back_rounded)),
+              SizedBox(width: 11),
+              Text(AppStrings.categories,
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          CustomListTle(
+            onTap: () {
+              setState(() {
+                widget.task.category = null;
+                _selectedNone = true;
+              });
+            },
+            title: Text("None"),
+            selectedIcon: Icon(Icons.check),
+            selectedColor: Theme.of(context).hoverColor,
+            selected: _selectedNone,
+            selectedTitle: Text(
+              "None",
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).primaryColorDark),
+            ),
+          ),
+          _buildCategoriesStream(),
+          CustomButton(
+            buttonText: "Add category",
+            onPressed: () async {
+              _shouldChangeListView = await showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Dialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(12))),
+                      child: SingleChildScrollView(
+                          child: AddCategoryPage(
+                        categories: _categories,
+                        newCategories: _newCategories,
+                      )),
+                    );
+                  });
+              if (_shouldChangeListView == null || _shouldChangeListView)
+                setState(() {
+                  _categories.addAll(_newCategories);
                 });
-          },
-        ),
-      ],
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -100,7 +136,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
     }
 
     if (categories is SuccessState) {
-      return _buildCategories((categories as SuccessState).data);
+      this._categories = (categories as SuccessState).data;
+      return _buildCategories();
     }
 
     //error
@@ -111,32 +148,37 @@ class _CategoriesPageState extends State<CategoriesPage> {
     return BlocStates.buildLoader();
   }
 
-  Widget _buildCategories(List<Category> categories) {
+  Widget _buildCategories() {
     return Expanded(
         child: ListView.builder(
-      padding: EdgeInsets.all(10.0),
-      itemCount: categories.length,
+      itemCount: _categories.length,
       itemBuilder: (_, index) => _buildCategoryItem(
-        categories[index],
+        _categories[index],
       ),
     ));
   }
 
   Widget _buildCategoryItem(Category categoryItem) {
     return Container(
-        padding: EdgeInsets.all(2.0),
-        child: InkWell(
-            onTap: () {
-              setState(() {
-                widget.task.category = categoryItem;
-                Navigator.of(context).pop();
-              });
-            },
-            child: Container(
-              padding: EdgeInsets.all(15),
-              child: Center(
-                child: Text(categoryItem.name),
-              ),
-            )));
+      padding: EdgeInsets.all(2.0),
+      child: CustomListTle(
+        onTap: () {
+          setState(() {
+            widget.task.category = categoryItem;
+            _selectedNone = false;
+          });
+        },
+        selectedTitle: Text(categoryItem.name,
+            style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColorDark)),
+        title: Text(categoryItem.name),
+        selected: widget.task.category == null
+            ? false
+            : widget.task.category.name == categoryItem.name,
+        selectedColor: Theme.of(context).hoverColor,
+        selectedIcon: Icon(Icons.check),
+      ),
+    );
   }
 }

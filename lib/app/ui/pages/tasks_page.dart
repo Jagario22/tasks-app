@@ -1,10 +1,12 @@
 import 'package:bloc_pattern/bloc_pattern.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/app/api/api_error.dart';
 import 'package:task_manager/app/api/model/task.dart';
 import 'package:task_manager/app/blocks/state.dart';
 import 'package:task_manager/app/blocks/task_block.dart';
 import 'package:task_manager/app/resources/strings.dart';
 import 'package:task_manager/app/ui/pages/add_task_page.dart';
+import 'package:task_manager/app/ui/widgets/dialog/error_dialog.dart';
 import 'package:task_manager/app/ui/widgets/itemview/task_view.dart';
 
 import 'edit_task_page.dart';
@@ -35,6 +37,19 @@ class _TasksPage extends State<TasksPage> {
       appBar: AppBar(
         title: Text(AppStrings.appName),
         centerTitle: true,
+        actions: <Widget>[
+          Padding(
+              padding: EdgeInsets.only(right: 20.0),
+              child: GestureDetector(
+                onTap: () {
+                  _bloc.getTasksCall();
+                },
+                child: Icon(
+                  Icons.refresh,
+                  size: 26.0,
+                ),
+              )),
+        ],
       ),
       body: StreamBuilder<AppState<List<Task>>>(
         stream: _bloc.tasksStream,
@@ -42,11 +57,13 @@ class _TasksPage extends State<TasksPage> {
       ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => EditTaskPage(),
-          ),
-        ),
+        onPressed: () => Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (_) => EditTaskPage(),
+              ),
+            )
+            .then((value) => _bloc.getTasksCall()),
       ),
     );
   }
@@ -102,25 +119,26 @@ class _TasksPage extends State<TasksPage> {
         onChanged: (bool completed) {
           setState(() {
             tasks[index].completed = completed;
+            _updateTask(tasks[index]);
           });
         },
       ),
     );
   }
 
-  void _addTask() {
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12))),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: AddTaskPage(),
-              ));
-        });
+  Future<void> _updateTask(Task task) async {
+    try {
+      await BlocProvider.getBloc<TaskPageBlock>().apiClient.addTask(task);
+      print("POST request for task");
+    } on ApiError catch (ex) {
+      showDialog(
+          builder: (BuildContext context) {
+            return ErrorDialog(
+                    message: "Error. status code: " + ex.statusCode.toString())
+                .build(context);
+          },
+          context: context);
+    }
   }
 
   Widget _buildError(String errorMessage) {

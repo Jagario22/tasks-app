@@ -29,6 +29,10 @@ class EditPageBlock extends BlocBase {
     );
   }
 
+  void addCategory(Category category) async {
+    _makeCallForController(_categoriesController, () => apiClient.addCategory(category));
+  }
+
   void _makeCallForController<T>(
     StreamController<AppState<T>> controller,
     Future<T> Function() call,

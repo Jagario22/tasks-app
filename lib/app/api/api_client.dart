@@ -27,6 +27,7 @@ class ApiClient {
   Future<List<Task>> getTasks() async {
     Response<dynamic> response =
         await _makeCheckedCall(() => taskService.getAllTasks());
+    print("GET request for all tasks");
     final rawTasks = response.body as List<dynamic>;
     final tasks = rawTasks.map((rawTasks) => Task.fromJson(rawTasks)).toList();
 
@@ -36,6 +37,7 @@ class ApiClient {
   Future<List<Category>> getCategories() async {
     Response<dynamic> response =
         await _makeCheckedCall(() => categoryService.getAllCategories());
+    print("GET request for all categories");
     final rawCategories = response.body as List<dynamic>;
     final categories = rawCategories
         .map((rawCategories) => Category.fromJson(rawCategories))
@@ -45,13 +47,34 @@ class ApiClient {
   }
 
   Future addTask(Task task) async {
-    await _makeCheckedCall(() => taskService.addTask(task.toJson()));
+    try {
+      await _makeCheckedCall(() => taskService.addTask(task.toJson()));
+    } on ApiError catch (ex) {
+      rethrow;
+    } on SocketException catch (ex) {
+      rethrow;
+    } catch (ex) {
+      rethrow;
+    }
+    print("POST request for task");
+  }
+  Future addCategory(Category category) async {
+    try {
+      await _makeCheckedCall(() => categoryService.addCategory(category.toJson()));
+      print("POST request for category");
+    } on ApiError catch (ex) {
+      rethrow;
+    } on SocketException catch (ex) {
+      throw ApiError(message: ex.osError.toString());
+    } catch (ex) {
+      throw ApiError(message: AppStrings.generalErrorMessage);
+    }
+
   }
 
   Future<Response> _makeCheckedCall(Future<Response> Function() call) async {
     try {
       final response = await call();
-      print("processing " + call.toString());
 
       if (response.statusCode >= 400) {
         print(response.error.toString());
@@ -60,14 +83,13 @@ class ApiClient {
           message: response.error.toString(),
         );
       }
-
       return response;
     } on ApiError catch (ex) {
-      throw ex;
+      rethrow;
     } on SocketException catch (ex) {
-      throw ApiError(message: ex.osError.toString());
+      rethrow;
     } catch (ex) {
-      throw ApiError(message: AppStrings.generalErrorMessage);
+      rethrow;
     }
   }
 }

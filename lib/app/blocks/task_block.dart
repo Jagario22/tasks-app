@@ -22,13 +22,12 @@ class TaskPageBlock extends BlocBase {
   }
 
   void getTasksCall() async {
+    print("processing GET request for all tasks");
     _makeCallForController(
       _tasksController,
           () => apiClient.getTasks(),
     );
   }
-
-  // TODO: Think about the improvement
   void _makeCallForController<T>(
       StreamController<AppState<T>> controller,
       Future<T> Function() call,

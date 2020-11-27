@@ -1,17 +1,25 @@
+import 'package:bloc_pattern/bloc_pattern.dart';
 import 'package:flutter/material.dart';
+import 'package:task_manager/app/api/api_error.dart';
 import 'package:task_manager/app/api/model/category.dart';
+import 'package:task_manager/app/blocks/edit_page_block.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/dialog/error_dialog.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/view/modal_action_button_view.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/textfield/text_field_view.dart';
+import 'package:task_manager/app/ui/pages/edit_task_page.dart';
+import 'package:task_manager/app/ui/widgets/view/states_view.dart';
 
 class AddCategoryPage extends StatefulWidget {
+  final List<Category> categories;
+  final List<Category> newCategories;
+  const AddCategoryPage({Key key, @required this.categories, @required this.newCategories}) : super(key: key);
+
   @override
   _AddCategoryPageState createState() => _AddCategoryPageState();
 }
 
 class _AddCategoryPageState extends State<AddCategoryPage> {
   final _textTaskController = TextEditingController();
-
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +36,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         CustomTextField(
-              controller: _textTaskController, icon: Icon(Icons.category, color: Theme.of(context).accentColor),),
+          controller: _textTaskController,
+          icon: Icon(Icons.category, color: Theme.of(context).accentColor),
+        ),
         SizedBox(height: 12),
         SizedBox(
           height: 24,
@@ -37,17 +47,24 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           Navigator.of(context).pop();
         }, onSave: () async {
           if (isValidData()) {
-            //Category
             Category category = new Category(name: _textTaskController.text);
-            /*try {
-              print("processing");
-              await BlocProvider
-                  .getBloc<TaskPageBlock>()
+            try {
+              await BlocProvider.getBloc<EditPageBlock>()
                   .apiClient
                   .addCategory(category);
             } on ApiError catch (ex) {
-              return BlocStates.buildError(ex.message);
-            }*/
+              showDialog(
+                  barrierDismissible: false,
+                  context: context,
+                  builder: (BuildContext context) {
+                    return ErrorDialog(
+                            message: "Error. status code: " +
+                                ex.statusCode.toString())
+                        .build(context);
+                  });
+            }
+              widget.newCategories.add(category);
+              _textTaskController.clear();
           }
         }),
       ],
@@ -55,53 +72,30 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   }
 
   bool isValidData() {
+    _textTaskController.text = _textTaskController.text.trim();
     if (_textTaskController.text == "") {
       showDialog(
           barrierDismissible: false,
           context: context,
           builder: (BuildContext context) {
-            return ErrorDialog(message: "Please enter category name...").build(context);
+            return ErrorDialog(message: "Please enter category name...")
+                .build(context);
           });
       return false;
     }
+
+    for (int i = 0; i < widget.categories.length; i++) {
+      if (widget.categories[i].name == _textTaskController.text) {
+        showDialog(
+            barrierDismissible: false,
+            context: context,
+            builder: (BuildContext context) {
+              return ErrorDialog(message: "This category already exist")
+                  .build(context);
+            });
+        return false;
+      }
+    }
     return true;
   }
-
-  /*Widget _buildResponse(
-      BuildContext context,
-      AsyncSnapshot<AppState<List<Task>>> snapshot,
-      ) {
-    //no data
-    if (!snapshot.hasData) {
-      return Center(
-        child: Text(AppStrings.noData),
-      );
-    }
-
-    Widget _buildLoader() {
-      return BlocStates.buildLoader();
-    }
-
-    final tasks = snapshot.data;
-
-    //initial state
-    if (tasks is InitialState) {
-      return Center(
-        child: Text(AppStrings.initialTaskStateLabel),
-      );
-    }
-    //loaded tasks
-    if (tasks is SuccessState) {
-      Navigator.of(context).pop();
-    }
-
-    //error
-    if (tasks is ErrorState) {
-      return BlocStates.buildError((tasks as ErrorState).errorMessage);
-    }
-
-    return _buildLoader();
-  }*/
-
-
 }
