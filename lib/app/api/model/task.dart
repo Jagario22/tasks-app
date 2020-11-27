@@ -1,4 +1,5 @@
 import 'package:task_manager/app/api/model/priority.dart';
+import 'package:task_manager/util/date_util.dart';
 import 'category.dart';
 
 class Task {
@@ -25,11 +26,11 @@ class Task {
   Task.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     title = json['title'];
-    startTime = json['startTime'];
-    endTime = json['endTime'];
+    startTime = DateUtil.getDateTimeFromString(json['startTime']).toString();
+    endTime =  DateUtil.getDateTimeFromString(json['endTime']).toString();
     completed = json['completed'];
-    category = json[category] == null ? null : Category.fromJson(json["category"]);
-    priority = json[priority] == null ? null : EnumUtil.fromStringToEnum(json['priority']);
+    category = json['category'] == null ? null : Category.fromJson(json["category"]);
+    priority = json['priority'] == null ? null : EnumUtil.fromStringToEnum(json['priority']);
     description = json['description'];
 
   }

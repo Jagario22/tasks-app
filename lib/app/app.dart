@@ -38,7 +38,8 @@ class App extends StatelessWidget {
       title: AppStrings.appName,
       theme: ThemeData (
         primarySwatch: Colors.teal,
-        visualDensity: VisualDensity.adaptivePlatformDensity
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        backgroundColor: Colors.blueGrey.shade50,
       ),
       home: TasksPage(),
     )

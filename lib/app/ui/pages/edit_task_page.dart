@@ -13,7 +13,7 @@ import 'package:task_manager/app/ui/pages/categories_page.dart';
 import 'package:task_manager/app/ui/pages/priority_page.dart';
 import 'package:task_manager/app/ui/widgets/dialog/custom_bottom_dialog.dart';
 import 'package:task_manager/app/ui/widgets/dialog/error_dialog.dart';
-import 'package:time_machine/time_machine.dart';
+import 'package:task_manager/util/date_util.dart';
 
 class EditTaskPage extends StatefulWidget {
   final Task task;
@@ -30,8 +30,8 @@ class EditTaskPage extends StatefulWidget {
 class _EditTaskPageState extends State<EditTaskPage> {
   final _taskTitleController = TextEditingController();
   final _textDescriptionController = TextEditingController();
-  DateTime _selectedStartDate = DateTime.now();
-  DateTime _selectedEndDate = DateTime.now();
+  DateTime _selectedStartDate = DateTime.now().toLocal();
+  DateTime _selectedEndDate = DateTime.now().toLocal();
   Task _newTask;
 
   String categoryTitle = AppStrings.category;
@@ -49,8 +49,30 @@ class _EditTaskPageState extends State<EditTaskPage> {
       );
     } else {
       _newTask = widget.task;
+      _textDescriptionController.text = widget.task.description;
+      _taskTitleController.text = widget.task.title;
+      _selectedStartDate = DateTime.parse(widget.task.startTime);
+      _selectedEndDate = DateTime.parse(widget.task.endTime);
+      categoryTitle += getCategoryTitle();
+      priorityTitle += getPriorityTitle();
     }
     super.initState();
+  }
+
+
+
+  String getCategoryTitle() {
+    if (_newTask.category != null) {
+      return ": " + _newTask.category.name;
+    }
+    return "";
+  }
+
+  String getPriorityTitle() {
+    if (_newTask.priority != null) {
+      return  ": " + EnumUtil.fromEnumToString(_newTask.priority);
+    }
+    return "";
   }
 
   @override
@@ -60,8 +82,13 @@ class _EditTaskPageState extends State<EditTaskPage> {
         title: Text(AppStrings.editor),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-          scrollDirection: Axis.vertical, child: _buildEditor()),
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+            scrollDirection: Axis.vertical, child: _buildEditor()),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: onSave,
         child: Icon(Icons.check, color: Theme.of(context).primaryColorDark),
@@ -81,6 +108,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
           name: "Start date",
           icon: Icons.hourglass_bottom,
           onPressed: () async {
+            FocusScope.of(context).unfocus();
             DateTime datetime = await _pickDate();
             setState(() {
               _selectedStartDate = datetime;
@@ -96,9 +124,10 @@ class _EditTaskPageState extends State<EditTaskPage> {
           name: "Deadline",
           icon: Icons.hourglass_bottom,
           onPressed: () async {
+            FocusScope.of(context).unfocus();
             DateTime datetime = await _pickDate();
             setState(() {
-              _selectedStartDate = datetime;
+              _selectedEndDate = datetime;
             });
           },
           date: new DateFormat.yMMMMd('en_US').format(_selectedEndDate),
@@ -121,11 +150,12 @@ class _EditTaskPageState extends State<EditTaskPage> {
 
   Future<void> onSave() async {
     try {
+      FocusScope.of(context).unfocus();
       if (!_isValidData()) return;
       _newTask.title = _taskTitleController.text;
       _newTask.description = _textDescriptionController.text;
-      _newTask.startTime = formatDate(_selectedStartDate).toString();
-      _newTask.endTime = formatDate(_selectedEndDate).toString();
+      _newTask.startTime = DateUtil.formatDate(_selectedStartDate).toString();
+      _newTask.endTime = DateUtil.formatDate(_selectedEndDate).toString();
       _newTask.completed = false;
       print("processing POST request for task");
       await BlocProvider.getBloc<TaskPageBlock>().apiClient.addTask(_newTask);
@@ -147,7 +177,15 @@ class _EditTaskPageState extends State<EditTaskPage> {
       showDialog(
           context: context,
           builder: (context) => CustomBottomDialog(
-                message: "Please, enter a title of the task",
+                message: "Please, enter the title of the task",
+              ));
+      return false;
+    } else if (_selectedStartDate.isAfter(_selectedEndDate)) {
+      showDialog(
+          context: context,
+          builder: (context) =>
+              CustomBottomDialog(
+                message: "The start date should be before the deadline",
               ));
       return false;
     }
@@ -180,20 +218,6 @@ class _EditTaskPageState extends State<EditTaskPage> {
     );
   }
 
-  String getCategoryTitle() {
-    if (_newTask.category != null) {
-      return _newTask.category.name;
-    }
-    return "";
-  }
-
-  String getPriorityTitle() {
-    if (_newTask.priority != null) {
-      return EnumUtil.fromEnumToString(_newTask.priority);
-    }
-    return "";
-  }
-
   void _getAllCategories() async {
     bool shouldUpdate = await showDialog(
         barrierDismissible: false,
@@ -211,7 +235,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
     setState(() {
       if ((shouldUpdate == true || shouldUpdate == null)) {
         if (!isNewTaskCategoryNull())
-          categoryTitle = AppStrings.category + ": " + getCategoryTitle();
+          categoryTitle = AppStrings.category + getCategoryTitle();
         else
           categoryTitle = AppStrings.category;
       }
@@ -246,7 +270,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
     setState(() {
       if ((shouldUpdate == true || shouldUpdate == null)) {
         if (!_isNewTaskPriorityNull())
-          priorityTitle = AppStrings.priority + ": " + getPriorityTitle();
+          priorityTitle = AppStrings.priority +  getPriorityTitle();
         else
           priorityTitle = AppStrings.priority;
       }
@@ -272,6 +296,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
       padding: EdgeInsets.fromLTRB(0, 2, 0, 2),
       child: InkWell(
         onTap: () {
+          FocusScope.of(context).unfocus();
           onTap();
         },
         child: Padding(
@@ -340,11 +365,5 @@ class _EditTaskPageState extends State<EditTaskPage> {
       });
 
     return datetime;
-  }
-
-  OffsetDateTime formatDate(DateTime dateTime) {
-    return OffsetDateTime(
-        LocalDateTime.dateTime(dateTime, CalendarSystem.gregorian),
-        Offset.duration(dateTime.timeZoneOffset));
   }
 }

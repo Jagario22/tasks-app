@@ -5,7 +5,6 @@ import 'package:task_manager/app/api/model/task.dart';
 import 'package:task_manager/app/blocks/state.dart';
 import 'package:task_manager/app/blocks/task_block.dart';
 import 'package:task_manager/app/resources/strings.dart';
-import 'package:task_manager/app/ui/pages/add_task_page.dart';
 import 'package:task_manager/app/ui/widgets/dialog/error_dialog.dart';
 import 'package:task_manager/app/ui/widgets/itemview/task_view.dart';
 
@@ -34,6 +33,7 @@ class _TasksPage extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).backgroundColor,
       appBar: AppBar(
         title: Text(AppStrings.appName),
         centerTitle: true,
