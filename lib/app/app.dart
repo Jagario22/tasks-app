@@ -1,4 +1,3 @@
-
 import 'package:bloc_pattern/bloc_pattern.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,26 +22,29 @@ class App extends StatelessWidget {
     return BlocProvider(
         blocs: [
           Bloc(
-                (i) => TaskPageBlock(i.getDependency<ApiClient>()),
+            (i) => TaskPageBlock(i.getDependency<ApiClient>()),
             singleton: false,
           ),
           Bloc(
-                (i) => EditPageBlock(i.getDependency<ApiClient>()),
+            (i) => EditPageBlock(i.getDependency<ApiClient>()),
             singleton: false,
           ),
         ],
         dependencies: [
           Dependency((i) => ApiClient(), singleton: true),
         ],
-    child: MaterialApp (
-      title: AppStrings.appName,
-      theme: ThemeData (
-        primarySwatch: Colors.teal,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        backgroundColor: Colors.blueGrey.shade50,
-      ),
-      home: TasksPage(),
-    )
-    );
+        child: MaterialApp(
+          title: AppStrings.appName,
+          theme: ThemeData(
+            primarySwatch: Colors.teal,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            backgroundColor: Colors.blueGrey.shade50,
+            selectedRowColor: Colors.yellow.shade100,
+            unselectedWidgetColor: Colors.teal,
+            primaryColorDark: Colors.teal.shade800,
+            highlightColor: Colors.teal.shade100
+          ),
+          home: TasksPage(),
+        ));
   }
 }

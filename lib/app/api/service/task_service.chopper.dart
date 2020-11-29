@@ -33,4 +33,10 @@ class _$TaskService extends TaskService {
     final $request = Request('POST', $url, client.baseUrl, body: $body);
     return client.send<dynamic, dynamic>($request);
   }
+
+  Future<Response> deleteTask(int taskId) {
+    final $url = '/tasks/delete/id/${taskId}';
+    final $request = Request('DELETE', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
 }

@@ -26,11 +26,11 @@ class Task {
   Task.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     title = json['title'];
-    startTime = DateUtil.getDateTimeFromString(json['startTime']).toString();
-    endTime =  DateUtil.getDateTimeFromString(json['endTime']).toString();
+    startTime = json['startTime'];
+    endTime =  json['endTime'];
     completed = json['completed'];
     category = json['category'] == null ? null : Category.fromJson(json["category"]);
-    priority = json['priority'] == null ? null : EnumUtil.fromStringToEnum(json['priority']);
+    priority = json['priority'] == null ? null : EPriorityUtil.fromStringToEnum(json['priority']);
     description = json['description'];
 
   }
@@ -43,7 +43,7 @@ class Task {
     data['endTime'] = this.endTime;
     data['completed'] = this.completed;
     data['category'] = category == null ? null : this.category.toJson();
-    data['priority'] = this.priority == null ? null : EnumUtil.fromEnumToString(this.priority);
+    data['priority'] = this.priority == null ? null : EPriorityUtil.fromEnumToString(this.priority);
     data['description'] = this.description;
     return data;
   }

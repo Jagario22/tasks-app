@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:task_manager/app/api/model/task.dart';
 import 'package:task_manager/app/ui/pages/edit_task_page.dart';
+import 'package:task_manager/app/ui/widgets/itemview/custom_list_tile.dart';
+import 'package:task_manager/util/date_util.dart';
 
 class TaskView extends StatelessWidget {
   final Task task;
   final Function onChanged;
+  final Function onTap;
+  final Function onLongPress;
 
   const TaskView({
     Key key,
     @required this.task,
     @required this.onChanged,
+    this.onTap,
+    this.onLongPress,
   }) : super(key: key);
 
   Color _getStatusColor(BuildContext context) {
@@ -19,30 +26,21 @@ class TaskView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
         padding: EdgeInsets.all(2.0),
         child: Card(
           color: _getStatusColor(context),
           child: _buildTaskInfo(context),
-    ));
+        ));
   }
 
   Widget _buildTaskInfo(BuildContext context) {
-    return InkWell(
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => EditTaskPage(task: task),
-            ),
-          );
-        },
-        hoverColor: Colors.black,
-        child: Padding(
-            padding: EdgeInsets.fromLTRB(25, 0, 0, 0),
-            child: _buildColoredBox()));
+    return Container(
+        padding: EdgeInsets.fromLTRB(25, 0, 0, 0),
+        child: _buildColoredBox(context));
   }
 
-  Widget _buildColoredBox() {
+  Widget _buildColoredBox(BuildContext context) {
     return ColoredBox(
         color: Colors.white,
         child: Column(
@@ -50,41 +48,47 @@ class TaskView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              _buildTaskCheck(),
-              _buildAddTaskInfo(),
+              _buildListItem(context),
+              Container(
+                padding: EdgeInsets.fromLTRB(5, 0, 0, 5),
+              )
             ]));
   }
 
-  Widget _buildAddTaskInfo() {
-    return Padding(
-        padding: EdgeInsets.fromLTRB(6, 0, 0, 2),
-        child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildAddText("1d 12h 34m 15s to the End"),
-              _buildAddText("Category"),
-            ]));
-  }
-
-  Widget _buildAddText(String text) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(2, 0, 0, 0),
-      child: Text(text),
-    );
-  }
-
-  Widget _buildTaskCheck() {
-    return Row(
-      children: <Widget>[
-        Checkbox(
-            value: task.completed,
-            onChanged: (bool value) {
-              if (!task.completed) onChanged(value);
-            }),
-        Text(task.title),
-      ],
+  Widget _buildListItem(BuildContext context) {
+    String formattedDate = task.endTime == null
+        ? ""
+        : new DateFormat("dd/MM")
+            .format(DateUtil.dateTimeFromString(task.endTime));
+    String categoryTitle = task.category == null ? "" : task.category.name;
+    return CustomListTle(
+      onTap: () {
+        onTap();
+      },
+      onLongPress: () {
+        onLongPress();
+      },
+      selectedTitle:
+          Text(task.title, style: TextStyle(fontWeight: FontWeight.bold)),
+      tileColor: Colors.white,
+      title: Text(task.title),
+      leading: Checkbox(
+          value: task.completed,
+          onChanged: (bool value) {
+            if (!task.completed) onChanged(value);
+          }),
+      trailing: task.category == null
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                  Text(categoryTitle,
+                      style: TextStyle(color: Colors.grey.shade700)),
+                  Text(formattedDate,
+                      style: TextStyle(color: Colors.amber.shade700))
+                ]),
+      selected: task.completed,
     );
   }
 }

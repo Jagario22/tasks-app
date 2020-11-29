@@ -5,8 +5,12 @@ class CustomListTle extends StatelessWidget {
   final Function onTap;
   final Widget title;
   final Color selectedColor;
-  final Icon selectedIcon;
+  final Widget selectedTrailing;
+  final Widget trailing;
   final Widget selectedTitle;
+  final Widget leading;
+  final Color tileColor;
+  final Function onLongPress;
 
   const CustomListTle({
     Key key,
@@ -14,8 +18,11 @@ class CustomListTle extends StatelessWidget {
     this.onTap,
     this.title,
     this.selectedColor,
-    this.selectedIcon,
+    this.selectedTrailing,
     this.selectedTitle,
+    this.leading,
+    this.trailing,
+    this.tileColor, this.onLongPress,
   }) : super(key: key);
 
   @override
@@ -26,22 +33,34 @@ class CustomListTle extends StatelessWidget {
   Widget _buildSelectedListTile(BuildContext context) {
     return ListTile(
       onTap: () {
-        onTap();
+        if (onTap != null) onTap();
       },
+      contentPadding: EdgeInsets.fromLTRB(5, 0, 5, 0),
       title: selectedTitle == null ? title : selectedTitle,
       selected: true,
+      onLongPress: () {
+        onLongPress();
+      },
       selectedTileColor: selectedColor,
-      trailing: selectedIcon,
+      trailing: selectedTrailing == null ? trailing : selectedTrailing,
+      leading: leading,
     );
   }
 
   Widget buildListTile(BuildContext context) {
     return ListTile(
       onTap: () {
-        onTap();
+        if (onTap != null) onTap();
       },
+      onLongPress: () {
+        onLongPress();
+      },
+      contentPadding: EdgeInsets.fromLTRB(5, 0, 5, 0),
+      tileColor: tileColor,
       title: title,
       selected: false,
+      leading: leading,
+      trailing: trailing,
     );
   }
 }

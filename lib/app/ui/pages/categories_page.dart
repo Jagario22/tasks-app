@@ -67,7 +67,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
               });
             },
             title: Text("None"),
-            selectedIcon: Icon(Icons.check),
+            selectedTrailing: Icon(Icons.check),
             selectedColor: Theme.of(context).hoverColor,
             selected: _selectedNone,
             selectedTitle: Text(
@@ -177,7 +177,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
             ? false
             : widget.task.category.name == categoryItem.name,
         selectedColor: Theme.of(context).hoverColor,
-        selectedIcon: Icon(Icons.check),
+        selectedTrailing: Icon(Icons.check),
       ),
     );
   }

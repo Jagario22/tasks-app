@@ -23,6 +23,7 @@ class _PriorityPageState extends State<PriorityPage> {
 
   @override
   void initState() {
+
     _selectedNone = widget.task.priority == null ? true : false;
     super.initState();
   }
@@ -54,7 +55,7 @@ class _PriorityPageState extends State<PriorityPage> {
                 });
               },
               title: Text("None"),
-              selectedIcon: Icon(Icons.check),
+              selectedTrailing: Icon(Icons.check),
               selectedColor: Theme.of(context).hoverColor,
               selected: _selectedNone,
               selectedTitle: Text(
@@ -90,16 +91,16 @@ class _PriorityPageState extends State<PriorityPage> {
             _selectedNone = false;
           });
         },
-        selectedTitle: Text(EnumUtil.fromEnumToString(priority),
+        selectedTitle: Text(EPriorityUtil.fromEnumToString(priority),
             style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Theme.of(context).primaryColorDark)),
-        title: Text(EnumUtil.fromEnumToString(priority)),
+        title: Text(EPriorityUtil.fromEnumToString(priority)),
         selected: widget.task.priority == null
             ? false
             : widget.task.priority == priority,
         selectedColor: Theme.of(context).hoverColor,
-        selectedIcon: Icon(Icons.check),
+        selectedTrailing: Icon(Icons.check),
       ),
     );
   }

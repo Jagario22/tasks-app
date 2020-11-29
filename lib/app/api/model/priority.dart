@@ -1,6 +1,6 @@
 enum EPriority { HIGH, LOW, MEDIUM }
 
-class EnumUtil {
+class EPriorityUtil {
   static EPriority fromStringToEnum(String value) {
     if (value == "HIGH") return EPriority.HIGH;
 

@@ -5,7 +5,7 @@ class DateUtil {
     return Instant.dateTime(dateTime);
   }
 
-  static DateTime getDateTimeFromString(String datetime) {
+  static DateTime dateTimeFromString(String datetime) {
     DateTime date = DateTime.parse(datetime);
     return Instant.dateTime(date).toDateTimeLocal();
   }

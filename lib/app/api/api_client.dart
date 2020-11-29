@@ -58,6 +58,20 @@ class ApiClient {
     }
     print("POST request for task");
   }
+
+  Future deleteTask(int taskId) async {
+    try {
+      await _makeCheckedCall(() => taskService.deleteTask(taskId));
+    } on ApiError catch (ex) {
+      rethrow;
+    } on SocketException catch (ex) {
+      rethrow;
+    } catch (ex) {
+      rethrow;
+    }
+    print("DELETE request for task");
+  }
+
   Future addCategory(Category category) async {
     try {
       await _makeCheckedCall(() => categoryService.addCategory(category.toJson()));
