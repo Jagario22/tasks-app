@@ -2,7 +2,7 @@ class AppStrings {
   AppStrings._();
 
   // General
-  static const appName = "This is fine";
+  static const appName = "In time";
   static const editor = "Edit task";
   static const noData = "- No data -";
   static const generalErrorMessage = "Oops... We have an ERROR here :(";

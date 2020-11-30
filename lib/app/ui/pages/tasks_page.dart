@@ -12,7 +12,9 @@ import 'package:task_manager/app/resources/strings.dart';
 import 'package:task_manager/app/ui/widgets/dialog/error_dialog.dart';
 import 'package:task_manager/app/ui/widgets/itemview/item_selection_view.dart';
 import 'package:task_manager/app/ui/widgets/itemview/task_view.dart';
+import 'package:task_manager/app/ui/widgets/view/states_view.dart';
 import 'package:task_manager/util/sort_util.dart';
+import 'package:task_manager/util/task_list_util.dart';
 
 import 'edit_task_page.dart';
 
@@ -25,6 +27,10 @@ class _TasksPage extends State<TasksPage> {
   final _bloc = BlocProvider.getBloc<TaskPageBlock>();
   final List<String> _sortOptions = ESortUtil.allToStringValue(ESort.values);
   List<Task> allTasks;
+  int gone = 0;
+  int onGoing = 0;
+  int waiting = 0;
+  int completed = 0;
   ESort _selectedSortOption;
   Duration alert;
   Timer timer;
@@ -74,7 +80,7 @@ class _TasksPage extends State<TasksPage> {
               _bloc.getTasksCall();
             },
             icon: Icon(Icons.refresh)),
-        IconButton(
+        Container (padding: EdgeInsets.fromLTRB(0, 0, 12, 0), child:  IconButton(
           onPressed: () {
             showModalBottomSheet(
                 context: context,
@@ -86,7 +92,8 @@ class _TasksPage extends State<TasksPage> {
                 });
           },
           icon: Icon(Icons.sort),
-        ),
+        ),),
+
       ],
     );
   }
@@ -106,8 +113,9 @@ class _TasksPage extends State<TasksPage> {
     String sortName = sortOption.substring(0, 2) + " " + sortOption.substring(2);
     return ItemSelection(
         onTap: () {
-          _selectedSortOption = ESortUtil.toEnum(sortOption);
-          _bloc.getTasksCall();
+          setState(() {
+            _selectedSortOption = ESortUtil.toEnum(sortOption);
+          });
           Navigator.of(context).pop();
         },
         title: "Sort " + sortName,
@@ -138,7 +146,7 @@ class _TasksPage extends State<TasksPage> {
 
     //loading tasks
     if (tasks is LoadingState) {
-      return _buildLoader();
+      return BlocStates.buildLoader();
     }
 
     //loaded tasks
@@ -148,19 +156,15 @@ class _TasksPage extends State<TasksPage> {
 
     //error
     if (tasks is ErrorState) {
-      return _buildError((tasks as ErrorState).errorMessage);
+      return BlocStates.buildError((tasks as ErrorState).errorMessage);
     }
 
-    return _buildLoader();
-  }
-
-  Widget _buildLoader() {
-    return Center(child: CircularProgressIndicator());
+    return BlocStates.buildLoader();
   }
 
   Widget _buildTasks(List<Task> tasks) {
     if (_selectedSortOption != null) {
-      tasks = ESortUtil.sortTasks(_selectedSortOption, tasks);
+      tasks = TaskListUtil.sortTasks(_selectedSortOption, tasks);
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,12 +173,19 @@ class _TasksPage extends State<TasksPage> {
           padding: EdgeInsets.fromLTRB(25, 20, 0, 0),
           child: _buildCurrentDateTime(),
         ),
-        _buildCurrentTasksStatistic(),
+        _buildCurrentTasksStatistic(tasks),
         Expanded(child: _buildTasksList(tasks)),
-
       ],
     );
 
+  }
+
+  void _countStatistic(List<Task> tasks) {
+    List<int> statistic = TaskListUtil.countStatistic(tasks);
+    waiting = statistic[0];
+    onGoing = statistic[1];
+    gone = statistic[2];
+    completed = statistic[3];
   }
 
   Widget _buildCurrentDateTime() {
@@ -182,7 +193,8 @@ class _TasksPage extends State<TasksPage> {
     return Text(dateTime, style: TextStyle(fontSize:16));
   }
 
-  Widget _buildCurrentTasksStatistic() {
+  Widget _buildCurrentTasksStatistic(List<Task> tasks) {
+    _countStatistic(tasks);
     return Container(
       padding: EdgeInsets.fromLTRB(12, 25, 12, 0),
       child: Column(
@@ -194,16 +206,16 @@ class _TasksPage extends State<TasksPage> {
             height: 0,
             thickness: 1,
             indent: 30,
-            endIndent: 0,
+            endIndent: 30,
           ),
           Container(
-            padding: EdgeInsets.fromLTRB(70, 12, 0, 0),
+            padding: EdgeInsets.fromLTRB(0, 12, 0, 0),
             child:  Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Column (
                   children: [
-                    Text("0"),
+                    Text(gone.toString()),
                     Text("Gone"),
                   ],
                 ),
@@ -212,7 +224,7 @@ class _TasksPage extends State<TasksPage> {
                 ),
                 Column (
                   children: [
-                    Text("6"),
+                    Text(onGoing.toString()),
                     Text("On going"),
                   ],
                 ),
@@ -221,8 +233,17 @@ class _TasksPage extends State<TasksPage> {
                 ),
                 Column (
                   children: [
-                    Text("0"),
+                    Text(waiting.toString()),
                     Text("Waiting"),
+                  ],
+                ),
+                SizedBox(
+                  width: 30,
+                ),
+                Column (
+                  children: [
+                    Text(completed.toString()),
+                    Text("Completed"),
                   ],
                 ),
               ],
@@ -236,7 +257,7 @@ class _TasksPage extends State<TasksPage> {
 
   Widget _buildTasksList(List<Task> tasks) {
     return  ListView.builder(
-      padding: EdgeInsets.fromLTRB(30, 15, 15, 15.0),
+      padding: EdgeInsets.fromLTRB(15, 15, 15, 12.0),
       itemCount: tasks.length,
       itemBuilder: (_, index) => TaskView(
         task: tasks[index],
@@ -259,7 +280,7 @@ class _TasksPage extends State<TasksPage> {
                         _deleteTask(task.id);
                         Navigator.of(context).pop();
                       },
-                      child: Text("Yes")),
+                      child: Text("Ok")),
                 ],
               ));
         },
@@ -311,18 +332,5 @@ class _TasksPage extends State<TasksPage> {
     }
   }
 
-  Widget _buildError(String errorMessage) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(32.0),
-        child: Text(
-          errorMessage,
-          style: TextStyle(
-            fontSize: 24.0,
-            color: Colors.red,
-          ),
-        ),
-      ),
-    );
-  }
+
 }

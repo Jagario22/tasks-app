@@ -21,7 +21,9 @@ class TaskView extends StatelessWidget {
 
   Color _getStatusColor(BuildContext context) {
     final theme = Theme.of(context);
-    return task.completed ? theme.primaryColor : theme.primaryColorLight;
+    return task.completed
+        ? Theme.of(context).primaryColorDark
+        : theme.primaryColorLight;
   }
 
   @override
@@ -56,11 +58,6 @@ class TaskView extends StatelessWidget {
   }
 
   Widget _buildListItem(BuildContext context) {
-    String formattedDate = task.endTime == null
-        ? ""
-        : new DateFormat("dd/MM")
-            .format(DateUtil.dateTimeFromString(task.endTime));
-    String categoryTitle = task.category == null ? "" : task.category.name;
     return CustomListTle(
       onTap: () {
         onTap();
@@ -68,27 +65,51 @@ class TaskView extends StatelessWidget {
       onLongPress: () {
         onLongPress();
       },
-      selectedTitle:
-          Text(task.title, style: TextStyle(fontWeight: FontWeight.bold)),
+      selectedTitle: Text(task.title,
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.lineThrough)),
       tileColor: Colors.white,
       title: Text(task.title),
       leading: Checkbox(
+          checkColor: Colors.white,
+          activeColor: Theme.of(context).primaryColorDark,
           value: task.completed,
           onChanged: (bool value) {
-            if (!task.completed) onChanged(value);
+            if (_validCheck(task)) onChanged(value);
           }),
-      trailing: task.category == null
-          ? null
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                  Text(categoryTitle,
-                      style: TextStyle(color: Colors.grey.shade700)),
-                  Text(formattedDate,
-                      style: TextStyle(color: Colors.amber.shade700))
-                ]),
+      trailing: _buildTaskAddInfo(task),
       selected: task.completed,
     );
+  }
+
+  Widget _buildTaskAddInfo(Task task) {
+    String formattedDate = task.endTime == null
+        ? ""
+        : new DateFormat("dd/MM")
+            .format(DateUtil.dateTimeFromString(task.endTime));
+    String categoryTitle = task.category == null ? "" : task.category.name;
+
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(categoryTitle, style: TextStyle(color: Colors.grey.shade700)),
+          Text(formattedDate, style: TextStyle(color: Colors.amber.shade700))
+        ]);
+  }
+
+  bool _validCheck(Task task) {
+    DateTime startTime = DateUtil.dateTimeFromString(task.startTime);
+    DateTime now = DateTime.now();
+
+    if (startTime.isBefore(now)) {
+      if (task.endTime != null) {
+        DateTime endTime = DateUtil.dateTimeFromString(task.endTime);
+        if (endTime.isAfter(now)) return false;
+      }
+    }
+
+    return true;
   }
 }
