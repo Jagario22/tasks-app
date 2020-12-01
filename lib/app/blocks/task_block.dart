@@ -25,9 +25,42 @@ class TaskPageBlock extends BlocBase {
     print("processing GET request for all tasks");
     _makeCallForController(
       _tasksController,
-          () => apiClient.getTasks(),
+          () => apiClient.getAllTasks(),
     );
   }
+
+  void getGoneTasks(String endDateTime) async {
+    print("processing GET request for gone tasks");
+    _makeCallForController(
+      _tasksController,
+          () => apiClient.getGoneTasks(endDateTime),
+    );
+  }
+
+  void getUnfinishedTasks() async {
+    print("processing GET request for not completed tasks");
+    _makeCallForController(
+      _tasksController,
+          () => apiClient.getUnfinishedTasks(),
+    );
+  }
+
+  void getAllTasksDuringDays(String start, String end) async {
+    print("processing GET request for all tasks during day");
+    _makeCallForController(
+      _tasksController,
+          () => apiClient.getAllTasksDuringDays(start, end),
+    );
+  }
+
+  void getAllPlannedTasks(String start) async {
+    print("processing GET request for all planned tasks");
+    _makeCallForController(
+      _tasksController,
+          () => apiClient.getAllPlannedTasks(start),
+    );
+  }
+
   void _makeCallForController<T>(
       StreamController<AppState<T>> controller,
       Future<T> Function() call,

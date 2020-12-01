@@ -24,10 +24,50 @@ class ApiClient {
 
   static final categoryService = _chopperClient.getService<CategoryService>();
 
-  Future<List<Task>> getTasks() async {
+  Future<List<Task>> getAllTasks() async {
     Response<dynamic> response =
         await _makeCheckedCall(() => taskService.getAllTasks());
-    print("GET request for all tasks");
+    print("GET request is succeed");
+    final rawTasks = response.body as List<dynamic>;
+    final tasks = rawTasks.map((rawTasks) => Task.fromJson(rawTasks)).toList();
+
+    return tasks;
+  }
+
+  Future<List<Task>> getGoneTasks(String endDateTime) async {
+    Response<dynamic> response =
+    await _makeCheckedCall(() => taskService.getGoneTasks(endDateTime));
+    print("GET request is succeed");
+    final rawTasks = response.body as List<dynamic>;
+    final tasks = rawTasks.map((rawTasks) => Task.fromJson(rawTasks)).toList();
+
+    return tasks;
+  }
+
+  Future<List<Task>> getUnfinishedTasks() async {
+    Response<dynamic> response =
+    await _makeCheckedCall(() => taskService.getUnfinishedTasks());
+    print("GET request is succeed");
+    final rawTasks = response.body as List<dynamic>;
+    final tasks = rawTasks.map((rawTasks) => Task.fromJson(rawTasks)).toList();
+
+    return tasks;
+  }
+
+  Future<List<Task>> getAllTasksDuringDays(String start, String end) async {
+    Response<dynamic> response =
+    await _makeCheckedCall(() => taskService.getAllTasksDuringDays(start, end));
+    print("GET request is succeed");
+    final rawTasks = response.body as List<dynamic>;
+    final tasks = rawTasks.map((rawTasks) => Task.fromJson(rawTasks)).toList();
+
+    return tasks;
+  }
+
+  Future<List<Task>> getAllPlannedTasks(String start) async {
+    Response<dynamic> response =
+    await _makeCheckedCall(() => taskService.getAllPlannedTasks(start));
+    print("GET request is succeed");
     final rawTasks = response.body as List<dynamic>;
     final tasks = rawTasks.map((rawTasks) => Task.fromJson(rawTasks)).toList();
 

@@ -106,7 +106,7 @@ class TaskView extends StatelessWidget {
     if (startTime.isBefore(now)) {
       if (task.endTime != null) {
         DateTime endTime = DateUtil.dateTimeFromString(task.endTime);
-        if (endTime.isAfter(now)) return false;
+        if (!endTime.isAfter(now)) return false;
       }
     }
 

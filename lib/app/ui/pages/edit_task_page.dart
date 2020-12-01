@@ -4,6 +4,7 @@ import 'package:bloc_pattern/bloc_pattern.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:task_manager/app/api/api_error.dart';
+import 'package:task_manager/app/api/model/page_status.dart';
 import 'package:task_manager/app/api/model/priority.dart';
 import 'package:task_manager/app/api/model/task.dart';
 import 'package:task_manager/app/blocks/task_block.dart';
@@ -18,10 +19,12 @@ import 'package:task_manager/util/date_util.dart';
 
 class EditTaskPage extends StatefulWidget {
   final Task task;
+  final PageStatus status;
 
   const EditTaskPage({
     Key key,
     this.task,
+    this.status,
   }) : super(key: key);
 
   @override
@@ -179,7 +182,10 @@ class _EditTaskPageState extends State<EditTaskPage> {
 
   Future<void> onSave() async {
     try {
+      if (widget.status != null)
+        widget.status.requiredUpdate = true;
       FocusScope.of(context).unfocus();
+
       if (!_isValidData()) return;
       _newTask.title = _taskTitleController.text;
       _newTask.description = _textDescriptionController.text;
@@ -188,8 +194,10 @@ class _EditTaskPageState extends State<EditTaskPage> {
           ? null
           : DateUtil.formatDate(_selectedEndDate).toString();
       _newTask.completed = false;
+
       print("processing POST request for task");
       await BlocProvider.getBloc<TaskPageBlock>().apiClient.addTask(_newTask);
+
       Navigator.pop(context);
     } on ApiError catch (ex) {
       showDialog(
@@ -266,7 +274,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
               ));
         });
     setState(() {
-      if ((shouldUpdate == true || shouldUpdate == null)) {
+      if (shouldUpdate == true || shouldUpdate == null) {
         if (!isNewTaskCategoryNull())
           categoryTitle = AppStrings.category + getCategoryTitle();
         else
@@ -300,7 +308,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
                   child: PriorityPage(task: _newTask)));
         });
     setState(() {
-      if ((shouldUpdate == true || shouldUpdate == null)) {
+      if (shouldUpdate == true || shouldUpdate == null) {
         if (!_isNewTaskPriorityNull())
           priorityTitle = AppStrings.priority + getPriorityTitle();
         else
@@ -515,15 +523,5 @@ class _EditTaskPageState extends State<EditTaskPage> {
     }
 
     return "${f(hours)}:${f(minutes % 60)}:${f(secs)}";
-  }
-
-  Widget _buildAdditionalInfoTask(Text text) {
-    return Text(
-      text.data,
-      style: TextStyle(
-        color: Colors.black26,
-        fontSize: 14.0,
-      ),
-    );
   }
 }

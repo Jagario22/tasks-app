@@ -19,6 +19,8 @@ class TaskListUtil {
       result.sort((a, b) {
         return _sortByStartDate(a, b);
       });
+    } else if (eSort == ESort.byCompletedStatus) {
+      return _sortByCompleteStatus(tasks);
     }
     return result;
   }
@@ -59,6 +61,24 @@ class TaskListUtil {
     statistic.add(gone);
     statistic.add(completed);
     return statistic;
+  }
+
+  static List<Task> _sortByCompleteStatus(List<Task> tasks) {
+    List<Task> unfinished = new List();
+    List<Task> completed = new List();
+
+    for (int i = 0; i < tasks.length; i++) {
+      tasks[i].completed == true
+          ? completed.add(tasks[i])
+          : unfinished.add(tasks[i]);
+    }
+
+    List<Task> result = new List();
+
+    result.addAll(unfinished);
+    result.addAll(completed);
+
+    return result;
   }
 
   static List<Task> _sortByPriority(List<Task> tasks) {

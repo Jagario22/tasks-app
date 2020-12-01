@@ -20,6 +20,12 @@ class _$TaskService extends TaskService {
     return client.send<dynamic, dynamic>($request);
   }
 
+  Future<Response> getGoneTasks(String endDateTime) {
+    final $url = '/tasks/gone/${endDateTime}';
+    final $request = Request('GET', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
+
   Future<Response> addTask(Map<String, dynamic> task) {
     final $url = '/tasks/add';
     final $body = task;
@@ -27,10 +33,23 @@ class _$TaskService extends TaskService {
     return client.send<dynamic, dynamic>($request);
   }
 
-  Future<Response> login(Map<String, dynamic> loginRequest) {
-    final $url = '/tasks';
-    final $body = loginRequest;
-    final $request = Request('POST', $url, client.baseUrl, body: $body);
+  Future<Response> getAllTasksDuringDays(
+      String start, String end) {
+    final $url = '/tasks/during/days/${start}/${end}';
+    final $request = Request('GET', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
+
+  Future<Response> getAllPlannedTasks(
+      String startDay) {
+    final $url = 'tasks/during/planned/${startDay}';
+    final $request = Request('GET', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
+
+  Future<Response> getUnfinishedTasks() {
+    final $url = '/tasks/unfinished';
+    final $request = Request('GET', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 

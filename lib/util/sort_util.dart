@@ -2,12 +2,7 @@ import 'package:task_manager/app/api/model/priority.dart';
 import 'package:task_manager/app/api/model/task.dart';
 import 'package:task_manager/util/date_util.dart';
 
-enum ESort {
-  byPriority,
-  byTitle,
-  byDeadLine,
-  byStartDate,
-}
+enum ESort { byPriority, byTitle, byDeadLine, byStartDate, byCompletedStatus }
 
 class ESortUtil {
   static ESort toEnum(String value) {
@@ -18,6 +13,8 @@ class ESortUtil {
     if (value == "byDeadLine") return ESort.byDeadLine;
 
     if (value == "byStartDate") return ESort.byStartDate;
+
+    if (value == "byCompletedStatus") return ESort.byCompletedStatus;
 
     return null;
   }
@@ -35,5 +32,4 @@ class ESortUtil {
 
     return result;
   }
-
 }

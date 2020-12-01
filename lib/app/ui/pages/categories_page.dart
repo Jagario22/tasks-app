@@ -65,6 +65,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                 widget.task.category = null;
                 _selectedNone = true;
               });
+              Navigator.of(context).pop();
             },
             title: Text("None"),
             selectedTrailing: Icon(Icons.check),
@@ -166,6 +167,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           setState(() {
             widget.task.category = categoryItem;
             _selectedNone = false;
+            Navigator.of(context).pop();
           });
         },
         selectedTitle: Text(categoryItem.name,
