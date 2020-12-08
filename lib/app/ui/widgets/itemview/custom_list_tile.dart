@@ -11,6 +11,7 @@ class CustomListTle extends StatelessWidget {
   final Widget leading;
   final Color tileColor;
   final Function onLongPress;
+  final Widget subtitle;
 
   const CustomListTle({
     Key key,
@@ -22,7 +23,9 @@ class CustomListTle extends StatelessWidget {
     this.selectedTitle,
     this.leading,
     this.trailing,
-    this.tileColor, this.onLongPress,
+    this.tileColor,
+    this.onLongPress,
+    this.subtitle,
   }) : super(key: key);
 
   @override
@@ -44,6 +47,7 @@ class CustomListTle extends StatelessWidget {
       selectedTileColor: selectedColor,
       trailing: selectedTrailing == null ? trailing : selectedTrailing,
       leading: leading,
+      subtitle: subtitle,
     );
   }
 
@@ -61,6 +65,7 @@ class CustomListTle extends StatelessWidget {
       selected: false,
       leading: leading,
       trailing: trailing,
+      subtitle: subtitle,
     );
   }
 }

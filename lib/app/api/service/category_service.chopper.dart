@@ -26,4 +26,11 @@ class _$CategoryService extends CategoryService {
     final $request = Request('POST', $url, client.baseUrl, body: $body);
     return client.send<dynamic, dynamic>($request);
   }
+
+  @override
+  Future<Response> deleteById(int id) {
+    final $url = '/categories/id/${id}/delete';
+    final $request = Request('DELETE', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
 }

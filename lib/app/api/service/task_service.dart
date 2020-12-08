@@ -3,7 +3,7 @@ import 'package:task_manager/app/resources/api_constants.dart';
 
 part 'task_service.chopper.dart';
 
-@ChopperApi(baseUrl: AppConstants.tasksURL)
+@ChopperApi(baseUrl: ApiConstants.tasksURL)
 abstract class TaskService extends ChopperService {
 
 
@@ -12,22 +12,28 @@ abstract class TaskService extends ChopperService {
   @Get()
   Future<Response> getAllTasks();
 
-  @Get(path: "/gone/{endDateTime}")
+  @Get(path: ApiConstants.getAllTasksByCategoryId)
+  Future<Response> getAllTasksByCategoryId(int categoryId);
+
+  @Post(path: ApiConstants.deleteAllByCategoryId)
+  Future<Response> deleteAllByCategoryId(@Path() int categoryId);
+
+  @Get(path: ApiConstants.getGoneTasks)
   Future<Response> getGoneTasks(String endDateTime);
 
-  @Post(path: "/add")
+  @Post(path: ApiConstants.addTask)
   Future<Response> addTask(@Body() Map<String, dynamic> task);
 
-  @Get(path: "/during/days/{start}/{end}")
+  @Get(path: ApiConstants.getAllTasksDuringDays)
   Future<Response> getAllTasksDuringDays(@Path() String start, @Path() String end);
 
-  @Get(path: "/during/planned/{startDay}")
+  @Get(path: ApiConstants.getAllPlannedTasks)
   Future<Response> getAllPlannedTasks(@Path() String start);
 
-  @Get(path: "/unfinished")
+  @Get(path: ApiConstants.getUnfinishedTasks)
   Future<Response> getUnfinishedTasks();
 
-  @Delete(path: "/delete/id/{taskId}")
+  @Delete(path: ApiConstants.deleteTask)
   Future<Response> deleteTask(@Path() int taskId);
 
 }

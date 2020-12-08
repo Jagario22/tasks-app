@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/app/resources/strings.dart';
 
 class ErrorDialog extends StatelessWidget {
   final String message;
@@ -13,7 +14,7 @@ class ErrorDialog extends StatelessWidget {
         style: TextStyle(fontSize: 14, color: Colors.red)),
         actions: [
           TextButton(
-            child: Text('OK'),
+            child: Text(AppStrings.okAlert),
             onPressed: () {
               Navigator.of(context).pop();
             },

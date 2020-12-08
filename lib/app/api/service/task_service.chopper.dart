@@ -20,6 +20,12 @@ class _$TaskService extends TaskService {
     return client.send<dynamic, dynamic>($request);
   }
 
+  Future<Response> getAllTasksByCategoryId(int categoryId) {
+    final $url = '/tasks/category/${categoryId}';
+    final $request = Request('GET', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
+
   Future<Response> getGoneTasks(String endDateTime) {
     final $url = '/tasks/gone/${endDateTime}';
     final $request = Request('GET', $url, client.baseUrl);
@@ -55,6 +61,12 @@ class _$TaskService extends TaskService {
 
   Future<Response> deleteTask(int taskId) {
     final $url = '/tasks/delete/id/${taskId}';
+    final $request = Request('DELETE', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
+
+  Future<Response> deleteAllByCategoryId(int categoryId) {
+    final $url = '/tasks/category/${categoryId}/delete';
     final $request = Request('DELETE', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }

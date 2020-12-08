@@ -5,10 +5,10 @@ import 'package:task_manager/app/api/api_error.dart';
 import 'package:task_manager/app/api/model/category.dart';
 import 'package:task_manager/app/blocks/state.dart';
 
-class EditPageBlock extends BlocBase {
+class CategoriesPageBlock extends BlocBase {
   final ApiClient apiClient;
 
-  EditPageBlock(this.apiClient);
+  CategoriesPageBlock(this.apiClient);
 
   final _categoriesController = StreamController<AppState<List<Category>>>()
     ..add(InitialState());
@@ -23,6 +23,7 @@ class EditPageBlock extends BlocBase {
   }
 
   void getCategoriesAll() async {
+    print("processing GET request for all categories");
     _makeCallForController(
       _categoriesController,
       () => apiClient.getCategories(),

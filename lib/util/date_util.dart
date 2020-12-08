@@ -30,7 +30,7 @@ class DateUtil {
     DateTime now = dateTime;
     now = now.add(new Duration(days: 1));
 
-    return DateTime(now.year, now.month, now.day);
+    return DateTime(now.year, now.month, now.day, 0, 0, 1);
   }
 
   static DateTime getTodayDayFromDate(DateTime dateTime) {
@@ -42,4 +42,8 @@ class DateUtil {
     return DateTime(result.year, result.month, result.day);
   }
 
+  static DateTime getPlannedFromDate(DateTime dateTime) {
+    DateTime nextWeek = DateUtil.getNextWeekFirstDate(dateTime);
+    return DateUtil.getNextWeekFirstDate(nextWeek);
+  }
 }

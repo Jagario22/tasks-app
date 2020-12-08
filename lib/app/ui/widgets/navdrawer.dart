@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:task_manager/app/resources/page_routes.dart';
+import 'package:task_manager/app/ui/pages/categories_page.dart';
 import 'package:task_manager/app/ui/pages/tasks_page.dart';
 import 'package:task_manager/util/task_page_mode.dart';
 
@@ -17,69 +19,52 @@ class NavDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.category_outlined),
             title: Text("Categories"),
-            onTap: () => {Navigator.of(context).pop()},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.categories),
+            },
           ),
           ListTile(
             leading: Icon(Icons.calendar_today),
             title: Text('Today'),
-            onTap: () => {Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (_) => TasksPage(pageMode: EMode.TODAY_TASKS),
-              ),
-            )},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.today),
+            },
           ),
           ListTile(
             leading: Icon(Icons.skip_next),
             title: Text('Tomorrow'),
-            onTap: () => {Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (_) => TasksPage(pageMode: EMode.TOMORROW_TASKS),
-              ),
-            )},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.tomorrow),
+            },
           ),
           ListTile(
             leading: Icon(Icons.next_week_outlined),
             title: Text('The next week'),
-            onTap: () => {Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (_) => TasksPage(pageMode: EMode.THE_NEXT_WEEK_TASKS),
-              ),
-            )},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.nextWeek),
+            },
           ),
           ListTile(
             leading: Icon(Icons.next_plan),
             title: Text("Planned"),
-            onTap: () => {Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (_) => TasksPage(pageMode: EMode.PLANNED),
-              ),
-            )},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.planned),
+            },
           ),
           ListTile(
             leading: Icon(Icons.timer),
             title: Text('Gone'),
-            onTap: () => {Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (_) => TasksPage(pageMode: EMode.GONE),
-              ),
-            )},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.gone),
+            },
           ),
           ListTile(
             leading: Icon(Icons.calendar_view_day),
             title: Text('All tasks'),
-            onTap: () => {Navigator.of(context)
-                .push(
-              MaterialPageRoute(
-                builder: (_) => TasksPage(pageMode: EMode.ALL_TASKS),
-              ),
-            )},
+            onTap: () => {
+              Navigator.pushReplacementNamed(context, PageRoutes.allTasks),
+            },
           ),
-
         ],
       ),
     );

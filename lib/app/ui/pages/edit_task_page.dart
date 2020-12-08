@@ -3,16 +3,18 @@ import 'dart:async';
 import 'package:bloc_pattern/bloc_pattern.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:task_manager/app/api/api_error.dart';
-import 'package:task_manager/app/api/model/page_status.dart';
-import 'package:task_manager/app/api/model/priority.dart';
-import 'package:task_manager/app/api/model/task.dart';
-import 'package:task_manager/app/blocks/task_block.dart';
+import 'package:task_manager/app/resources/theme/colors/light_colors.dart';
+import 'package:task_manager/util/task_page_mode.dart';
+import '../../api/api_error.dart';
+import '../../api/model/page_status.dart';
+import '../../api/model/priority.dart';
+import '../../api/model/task.dart';
+import '../../blocks/task_block.dart';
 import 'package:task_manager/app/resources/strings.dart';
+import 'package:task_manager/app/ui/pages/selection/select_categories_page.dart';
+import 'package:task_manager/app/ui/pages/selection/select_priority_page.dart';
 import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/datetime/datetime_picker_view.dart';
-import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/textfield/text_field_view.dart';
-import 'package:task_manager/app/ui/pages/categories_page.dart';
-import 'package:task_manager/app/ui/pages/priority_page.dart';
+import 'file:///D:/flutterProjects/task_manager/lib/app/ui/widgets/textfield/custom_text_field.dart';
 import 'package:task_manager/app/ui/widgets/dialog/custom_bottom_dialog.dart';
 import 'package:task_manager/app/ui/widgets/dialog/error_dialog.dart';
 import 'package:task_manager/util/date_util.dart';
@@ -20,11 +22,13 @@ import 'package:task_manager/util/date_util.dart';
 class EditTaskPage extends StatefulWidget {
   final Task task;
   final PageStatus status;
+  final EMode pageMode;
 
   const EditTaskPage({
     Key key,
     this.task,
     this.status,
+    this.pageMode,
   }) : super(key: key);
 
   @override
@@ -34,9 +38,11 @@ class EditTaskPage extends StatefulWidget {
 class _EditTaskPageState extends State<EditTaskPage> {
   final _taskTitleController = TextEditingController();
   final _textDescriptionController = TextEditingController();
+
   DateTime _selectedStartDate = DateTime.now().toLocal();
   DateTime _selectedEndDate;
   Task _newTask;
+
   Duration alert;
   Timer timer;
 
@@ -49,32 +55,29 @@ class _EditTaskPageState extends State<EditTaskPage> {
     super.dispose();
   }
 
-  @override
-  void initState() {
-    if (widget.task == null) {
-      _newTask = new Task(
-        title: "",
-        endTime: "",
-        startTime: "",
-        completed: false,
-        category: null,
-      );
-    } else {
-      _newTask = widget.task;
-      _textDescriptionController.text = widget.task.description;
-      _taskTitleController.text = widget.task.title;
-      _selectedStartDate = DateUtil.dateTimeFromString(widget.task.startTime);
-      _selectedEndDate = widget.task.endTime == null
-          ? null
-          : DateUtil.dateTimeFromString(widget.task.endTime);
-      categoryTitle += getCategoryTitle();
-      priorityTitle += getPriorityTitle();
-      if (_newTask.endTime != null)
-        _buildClock(DateUtil.dateTimeFromString(_newTask.endTime));
-    }
-
-    super.initState();
+  void _setFields() {
+    _newTask = widget.task;
+    _textDescriptionController.text = widget.task.description;
+    _taskTitleController.text = widget.task.title;
+    _selectedStartDate = DateUtil.dateTimeFromString(widget.task.startTime);
+    _selectedEndDate = widget.task.endTime == null
+        ? null
+        : DateUtil.dateTimeFromString(widget.task.endTime);
+    categoryTitle += getCategoryTitle();
+    priorityTitle += getPriorityTitle();
   }
+
+  Task _getNewTask() {
+    return new Task(
+      title: "",
+      endTime: "",
+      startTime: "",
+      completed: false,
+      category: null,
+    );
+  }
+
+  bool isAddingTask() => widget.task == null;
 
   String getCategoryTitle() {
     if (_newTask.category != null) {
@@ -91,10 +94,37 @@ class _EditTaskPageState extends State<EditTaskPage> {
   }
 
   @override
+  void initState() {
+    if (isAddingTask()) {
+      _newTask = _getNewTask();
+    } else {
+      _setFields();
+
+      if (_newTask.endTime != null)
+        _buildClock(DateUtil.dateTimeFromString(_newTask.endTime));
+    }
+
+    if (isAddingTask() && widget.pageMode != null) {
+      if (widget.pageMode == EMode.TODAY) {
+        _selectedStartDate = DateTime.now();
+      } else if (widget.pageMode == EMode.TOMORROW) {
+        _selectedStartDate = DateUtil.getTomorrowDay(DateTime.now());
+      } else if (widget.pageMode == EMode.NEXT_WEEK)
+        _selectedStartDate = DateUtil.getNextWeekFirstDate(DateTime.now());
+      else if (widget.pageMode == EMode.PLANNED) {
+        _selectedStartDate = DateUtil.getPlannedFromDate(DateTime.now());
+      }
+    }
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).backgroundColor,
       appBar: AppBar(
-        title: Text(AppStrings.editor),
+        backgroundColor: Theme.of(context).primaryColor,
+        title: Text(AppStrings.editTaskTitle),
         centerTitle: true,
       ),
       body: GestureDetector(
@@ -120,49 +150,14 @@ class _EditTaskPageState extends State<EditTaskPage> {
       children: <Widget>[
         _buildColorContainer(),
         SizedBox(height: 30),
-        CustomDateTimePicker(
-          name: "Start date",
-          icon: Icons.hourglass_bottom,
-          onPressed: () async {
-            FocusScope.of(context).unfocus();
-            DateTime datetime = await _pickDate(_selectedStartDate);
-            setState(() {
-              _selectedStartDate = datetime;
-            });
-          },
-          date: new DateFormat.yMMMMd('en_US').format(_selectedStartDate),
-          time: new DateFormat.jm().format(_selectedStartDate),
-        ),
-        SizedBox(
-          height: 30,
-        ),
-        CustomDateTimePicker(
-          name: "Deadline",
-          value: "Select deadline",
-          icon: Icons.hourglass_bottom,
-          onPressed: () async {
-            FocusScope.of(context).unfocus();
-            DateTime datetime = await _pickDate(_selectedEndDate);
-            setState(() {
-              if (timer != null) timer.cancel();
-              _selectedEndDate = datetime;
-              _buildClock(_selectedEndDate);
-            });
-          },
-          date: _selectedEndDate == null
-              ? null
-              : new DateFormat.yMMMMd('en_US').format(_selectedEndDate),
-          time: _selectedEndDate == null
-              ? null
-              : new DateFormat.jm().format(_selectedEndDate),
-        ),
-        SizedBox(
-          height: 15,
-        ),
+        _buildStartDateTimePicker(),
+        SizedBox(height: 30),
+        _buildEndDateTimePicker(),
+        SizedBox(height: 15),
         ListTile(
             leading: Icon(Icons.refresh,
                 color: Theme.of(context).accentColor, size: 30),
-            title: Text("Reset deadline"),
+            title: Text(AppStrings.resetPickerTitle),
             onTap: () {
               setState(() {
                 _selectedEndDate = null;
@@ -180,58 +175,111 @@ class _EditTaskPageState extends State<EditTaskPage> {
     );
   }
 
-  Future<void> onSave() async {
-    try {
-      if (widget.status != null)
-        widget.status.requiredUpdate = true;
-      FocusScope.of(context).unfocus();
+  Widget _buildColorContainer() {
+    return Container(
+        padding: EdgeInsets.fromLTRB(20.0, 40, 30, 40),
+        color: Theme.of(context).accentColor,
+        child: Column(
+          children: [
+            _buildTextField(
+                AppStrings.enterTaskNameHint,
+                Icon(Icons.title, color: Colors.teal.shade50),
+                _taskTitleController),
+            SizedBox(height: 16),
+            _buildTextField(
+                AppStrings.enterTaskNoteHint,
+                Icon(Icons.event_note_sharp, color: Colors.teal.shade50),
+                _textDescriptionController),
+            SizedBox(height: 30),
+            _selectedEndDate == null
+                ? _buildTimeLeftText(AppStrings.selectDateTimePickerHint)
+                : _buildTimeLeft(),
+          ],
+        ));
+  }
 
-      if (!_isValidData()) return;
-      _newTask.title = _taskTitleController.text;
-      _newTask.description = _textDescriptionController.text;
-      _newTask.startTime = DateUtil.formatDate(_selectedStartDate).toString();
-      _newTask.endTime = _selectedEndDate == null
+  Widget _buildTextField(
+      String text, Icon icon, TextEditingController textController) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(40.0, 10, 0, 0),
+      child: CustomTextField(
+          icon: icon,
+          labelText: text,
+          controller: textController,
+          textColor: Colors.white,
+          labelColor: Colors.white70),
+    );
+  }
+
+  Widget _buildStartDateTimePicker() {
+    return CustomDateTimePicker(
+      name: AppStrings.startDatePickerTitle,
+      icon: Icons.hourglass_bottom,
+      onPressed: () async {
+        FocusScope.of(context).unfocus();
+        DateTime datetime = await _pickDate(_selectedStartDate);
+        setState(() {
+          _selectedStartDate = datetime;
+        });
+      },
+      date: new DateFormat.yMMMMd('en_US').format(_selectedStartDate),
+      time: new DateFormat.jm().format(_selectedStartDate),
+    );
+  }
+
+  Widget _buildEndDateTimePicker() {
+    return CustomDateTimePicker(
+      name: AppStrings.endDateTimePickerTitle,
+      value: AppStrings.selectDateTimePickerHint,
+      icon: Icons.hourglass_bottom,
+      onPressed: () async {
+        FocusScope.of(context).unfocus();
+        DateTime datetime = _selectedEndDate == null
+            ? await _pickDate(DateTime.now())
+            : await _pickDate(_selectedEndDate);
+        setState(() {
+          if (timer != null) timer.cancel();
+          _selectedEndDate = datetime;
+          _buildClock(_selectedEndDate);
+        });
+      },
+      date: _selectedEndDate == null
           ? null
-          : DateUtil.formatDate(_selectedEndDate).toString();
-      _newTask.completed = false;
-
-      print("processing POST request for task");
-      await BlocProvider.getBloc<TaskPageBlock>().apiClient.addTask(_newTask);
-
-      Navigator.pop(context);
-    } on ApiError catch (ex) {
-      showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return ErrorDialog(
-                    message: "Error. status code: " + ex.statusCode.toString())
-                .build(context);
-          });
-    }
+          : new DateFormat.yMMMMd('en_US').format(_selectedEndDate),
+      time: _selectedEndDate == null
+          ? null
+          : new DateFormat.jm().format(_selectedEndDate),
+    );
   }
 
-  bool _isValidData() {
-    if (_taskTitleController.text.isEmpty) {
-      showDialogMessage(
-        "Please, enter the title of the task",
-      );
-      return false;
-    } else if (_selectedEndDate != null &&
-        _selectedStartDate.isAfter(_selectedEndDate)) {
-      showDialogMessage(
-        "The start date should be before the deadline",
-      );
-      return false;
-    }
-    return true;
-  }
-
-  void showDialogMessage(String message) {
-    showDialog(
+  Future<DateTime> _pickDate(DateTime dateTime) async {
+    DateTime selectedDateTime = dateTime;
+    DateTime datepick = await showDatePicker(
         context: context,
-        builder: (context) => CustomBottomDialog(
-              message: message,
-            ));
+        initialDate: selectedDateTime,
+        firstDate: selectedDateTime.add(Duration(days: -365)),
+        lastDate: selectedDateTime.add(Duration(days: 365)));
+
+    if (datepick == null) return dateTime;
+
+    TimeOfDay timePick = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child,
+        );
+      },
+    );
+
+    if (datepick != null && timePick != null)
+      setState(() {
+        selectedDateTime = DateTime(datepick.year, datepick.month, datepick.day,
+            timePick.hour, timePick.minute);
+      });
+
+    return selectedDateTime;
   }
 
   Widget _buildAddTaskInfo() {
@@ -240,7 +288,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Advance",
+          Text(AppStrings.addTaskInfoProperties,
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -260,77 +308,6 @@ class _EditTaskPageState extends State<EditTaskPage> {
     );
   }
 
-  void _getAllCategories() async {
-    bool shouldUpdate = await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12))),
-              child: Container(
-                width: 400.0,
-                height: 450.0,
-                child: CategoriesPage(task: _newTask),
-              ));
-        });
-    setState(() {
-      if (shouldUpdate == true || shouldUpdate == null) {
-        if (!isNewTaskCategoryNull())
-          categoryTitle = AppStrings.category + getCategoryTitle();
-        else
-          categoryTitle = AppStrings.category;
-      }
-    });
-  }
-
-  bool isNewTaskCategoryNull() {
-    if (_newTask.category == null) return true;
-
-    return false;
-  }
-
-  bool _isNewTaskPriorityNull() {
-    if (_newTask.priority == null) return true;
-
-    return false;
-  }
-
-  void _getAllPriority() async {
-    bool shouldUpdate = await showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return Dialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12))),
-              child: Container(
-                  width: 100.0,
-                  height: 300.0,
-                  child: PriorityPage(task: _newTask)));
-        });
-    setState(() {
-      if (shouldUpdate == true || shouldUpdate == null) {
-        if (!_isNewTaskPriorityNull())
-          priorityTitle = AppStrings.priority + getPriorityTitle();
-        else
-          priorityTitle = AppStrings.priority;
-      }
-    });
-  }
-
-  Widget _buildAdditionInfoItem(String name, Icon icon) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        icon,
-        SizedBox(
-          width: 20,
-        ),
-        Text(name,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal)),
-      ],
-    );
-  }
-
   Widget _buildAdvanceTaskInfo(String name, Icon icon, Function onTap) {
     return Padding(
       padding: EdgeInsets.fromLTRB(0, 2, 0, 2),
@@ -347,81 +324,147 @@ class _EditTaskPageState extends State<EditTaskPage> {
     );
   }
 
-  Widget _buildColorContainer() {
-    return Container(
-        padding: EdgeInsets.fromLTRB(20.0, 40, 30, 40),
-        color: Theme.of(context).accentColor,
-        child: Column(
-          children: [
-            _buildTextField(
-                'Enter task name',
-                Icon(Icons.title, color: Colors.teal.shade50),
-                _taskTitleController),
-            SizedBox(height: 16),
-            _buildTextField(
-                'Note',
-                Icon(Icons.event_note_sharp, color: Colors.teal.shade50),
-                _textDescriptionController),
-            SizedBox(height: 30),
-            _selectedEndDate == null
-                ? _buildTimeLeftText("select deadline")
-                : _buildTimeLeft(),
-          ],
-        ));
+  Widget _buildAdditionInfoItem(String name, Icon icon) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        icon,
+        SizedBox(
+          width: 20,
+        ),
+        Text(name,
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal)),
+      ],
+    );
+  }
+
+  void _getAllCategories() async {
+    bool shouldUpdate = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12))),
+              child: Container(
+                width: 400.0,
+                height: 450.0,
+                child: CategoriesSelectionPage(task: _newTask),
+              ));
+        });
+    setState(() {
+      if (shouldUpdate == true || shouldUpdate == null) {
+        if (!isNewTaskCategoryNull())
+          categoryTitle = AppStrings.category + getCategoryTitle();
+        else
+          categoryTitle = AppStrings.category;
+      }
+    });
+  }
+
+  void _getAllPriority() async {
+    bool shouldUpdate = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(12))),
+              child: Container(
+                  width: 100.0,
+                  height: 300.0,
+                  child: PrioritySelectionPage(task: _newTask)));
+        });
+    setState(() {
+      if (shouldUpdate == true || shouldUpdate == null) {
+        if (!_isNewTaskPriorityNull())
+          priorityTitle = AppStrings.priority + getPriorityTitle();
+        else
+          priorityTitle = AppStrings.priority;
+      }
+    });
+  }
+
+  Future<void> onSave() async {
+    final _bloc = BlocProvider.getBloc<TaskPageBlock>();
+    try {
+      if (widget.status != null) widget.status.requiredUpdate = true;
+      FocusScope.of(context).unfocus();
+
+      if (!_isValidData()) return;
+      _setNewTaskFields();
+
+      print("processing POST request for task");
+      await _bloc.apiClient.addTask(_newTask);
+
+      _bloc.dispose();
+      Navigator.pop(context);
+    } on ApiError catch (ex) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return ErrorDialog(
+                    message:
+                        AppStrings.errorAlertText + ex.statusCode.toString())
+                .build(context);
+          });
+      _bloc.dispose();
+    }
+  }
+
+  void _setNewTaskFields() {
+    _newTask.title = _taskTitleController.text;
+    _newTask.description = _textDescriptionController.text;
+    _newTask.startTime = DateUtil.formatDate(_selectedStartDate).toString();
+    _newTask.endTime = _selectedEndDate == null
+        ? null
+        : DateUtil.formatDate(_selectedEndDate).toString();
+    _newTask.completed = false;
+  }
+
+  bool _isValidData() {
+    if (_taskTitleController.text.isEmpty) {
+      showDialogMessage(
+        AppStrings.hintToEnterTitle,
+      );
+      return false;
+    } else if (_selectedEndDate != null &&
+        _selectedStartDate.isAfter(_selectedEndDate)) {
+      showDialogMessage(
+        AppStrings.hintStartTimeBeforeDeadline,
+      );
+      return false;
+    }
+    return true;
+  }
+
+  void showDialogMessage(String message) {
+    showDialog(
+        context: context,
+        builder: (context) => CustomBottomDialog(
+              message: message,
+            ));
+  }
+
+  bool isNewTaskCategoryNull() {
+    if (_newTask.category == null) return true;
+
+    return false;
+  }
+
+  bool _isNewTaskPriorityNull() {
+    if (_newTask.priority == null) return true;
+
+    return false;
   }
 
   Widget _buildTimeLeftText(String text) {
     return Text(
-      "Time left: " + text,
+      AppStrings.timeLeftTitle + text,
       style: TextStyle(
         fontSize: 18.0,
         fontWeight: FontWeight.bold,
-        color: Theme.of(context).highlightColor,
+        color: Theme.of(context).backgroundColor,
       ),
     );
-  }
-
-  Widget _buildTextField(
-      String text, Icon icon, TextEditingController textController) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(40.0, 10, 0, 0),
-      child: CustomTextField(
-          icon: icon,
-          labelText: text,
-          controller: textController,
-          textColor: Colors.white,
-          labelColor: Colors.white70),
-    );
-  }
-
-  Future<DateTime> _pickDate(DateTime dateTime) async {
-    DateTime selectedDateTime = dateTime;
-    DateTime datepick = await showDatePicker(
-        context: context,
-        initialDate: new DateTime.now(),
-        firstDate: new DateTime.now().add(Duration(days: -365)),
-        lastDate: new DateTime.now().add(Duration(days: 365)));
-
-    if (datepick == null) return selectedDateTime;
-
-    TimeOfDay timepick = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-      builder: (BuildContext context, Widget child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child,
-        );
-      },
-    );
-
-    if (datepick != null && timepick != null)
-      setState(() {
-        selectedDateTime = DateTime(datepick.year, datepick.month, datepick.day,
-            timepick.hour, timepick.minute);
-      });
-
-    return selectedDateTime;
   }
 
   void _buildClock(DateTime endTime) {
@@ -464,43 +507,6 @@ class _EditTaskPageState extends State<EditTaskPage> {
     }
 
     return _buildTimeLeftText("${days}d ${hours}h ${mins}m ${sec}s");
-  }
-
-  Widget _buildTimeTitle(Text text, DateTime dateTime) {
-    return Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            children: [
-              Text(
-                "${text.data} ",
-                style: TextStyle(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              Text(
-                "${dateTime.day}.${dateTime.month}.${dateTime.year}",
-                style: TextStyle(
-                  fontSize: 14.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-            ],
-          ),
-          Text(
-            "${dateTime.hour}h ${dateTime.minute}m ${dateTime.second}s",
-            style: TextStyle(
-              fontSize: 14.0,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-        ]);
   }
 
   String formatDuration(Duration d) {

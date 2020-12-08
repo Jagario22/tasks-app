@@ -29,6 +29,14 @@ class TaskPageBlock extends BlocBase {
     );
   }
 
+  void getAllTasksByCategoryId(int id) async {
+    print("processing GET request for all tasks by categoryId");
+    _makeCallForController(
+      _tasksController,
+          () => apiClient.getAllTasksByCategoryId(id),
+    );
+  }
+
   void getGoneTasks(String endDateTime) async {
     print("processing GET request for gone tasks");
     _makeCallForController(

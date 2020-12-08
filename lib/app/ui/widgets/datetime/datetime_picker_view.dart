@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:task_manager/app/resources/strings.dart';
 
 class CustomDateTimePicker extends StatelessWidget {
   final VoidCallback onPressed;
@@ -60,7 +61,7 @@ class CustomDateTimePicker extends StatelessWidget {
             children: [
               Text(name, style: TextStyle(fontSize: 14)),
               date == null
-                  ? Text("Select deadline",
+                  ? Text(AppStrings.selectDateTimePickerHint,
                       style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
